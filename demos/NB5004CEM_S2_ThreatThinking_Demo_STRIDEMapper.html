@@ -1,0 +1,843 @@
+<!--
+  NB5004CEM Session 2: Threat Thinking - STRIDE Mapper
+  =====================================================
+  What it demonstrates:
+    The two-way lookup between STRIDE threat categories and the five
+    security properties. Selecting a STRIDE category highlights the
+    property (or properties) it violates. Selecting a property highlights
+    the STRIDE threats that target it. Elevation of Privilege demonstrates
+    why two properties can be violated simultaneously.
+
+  When to open: During Session 2 theory, after slides 7-8 (STRIDE mapping)
+    and before the architecture activity. Also available for student self-study.
+
+  What to ask students:
+    - "Click Spoofing. Which property lights up? Now try the reverse."
+    - "Click Elevation of Privilege. Why do TWO properties light up?"
+    - "Which two STRIDE categories share Authenticity as their violation?"
+    - "I say Accountability is at risk - which STRIDE threats do you investigate?"
+    - "Flow 5 - Admin Access - is interesting. Apply Spoofing. What does that mean?"
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STRIDE Mapper - NB5004CEM Session 2</title>
+<style>
+  /* ── NIBM Palette ─────────────────────────────────────────────── */
+  :root {
+    --teal:        #1A9988;
+    --teal-light:  #E6F4F1;
+    --teal-mid:    #9FD6CE;
+    --orange:      #EB5600;
+    --orange-light:#FFF3ED;
+    --near-black:  #1A1A1A;
+    --dark-grey:   #595959;
+    --pale-grey:   #E9EDEE;
+    --steel-blue:  #6AA4C8;
+    --sky-blue:    #CFE8FA;
+    --sky-accent:  #2F8FC7;
+    --mint:        #A2FFE8;
+    --white:       #FFFFFF;
+    --slate:       #5B6B7A;
+    --green:       #2F9E5E;
+    --font: 'Segoe UI', 'Open Sans', Arial, sans-serif;
+    --radius: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--pale-grey);
+    color: var(--near-black);
+    min-height: 100vh;
+    padding-bottom: 2rem;
+  }
+
+  /* ── Header ───────────────────────────────────────────────────── */
+  header {
+    background: var(--near-black);
+    color: var(--white);
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .header-left { display: flex; flex-direction: column; }
+  .header-module {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--teal-mid);
+    font-weight: 600;
+  }
+  .header-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1.2;
+  }
+  .header-bars { display: flex; gap: 4px; align-items: center; }
+  .bar-teal   { width: 28px; height: 5px; background: var(--teal); border-radius: 2px; }
+  .bar-orange { width: 14px; height: 5px; background: var(--orange); border-radius: 2px; }
+
+  /* ── Instructions ─────────────────────────────────────────────── */
+  .instructions {
+    background: var(--sky-blue);
+    border-left: 4px solid var(--sky-accent);
+    padding: 0.65rem 1.25rem;
+    font-size: 0.85rem;
+    color: var(--near-black);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .step-badge {
+    background: var(--sky-accent);
+    color: var(--white);
+    font-weight: 700;
+    font-size: 0.72rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    white-space: nowrap;
+    letter-spacing: 0.04em;
+  }
+  .instructions span { color: var(--dark-grey); }
+
+  /* ── Main layout ──────────────────────────────────────────────── */
+  .main-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1.25rem 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+  @media (max-width: 700px) {
+    .main-wrap { grid-template-columns: 1fr; }
+  }
+
+  /* ── Panel base ───────────────────────────────────────────────── */
+  .panel {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.09);
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 0.6rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .panel-header.teal  { background: var(--teal);  color: var(--white); }
+  .panel-header.slate { background: var(--slate); color: var(--white); }
+  .panel-header.orange { background: var(--orange); color: var(--white); }
+  .panel-body { padding: 0.85rem; }
+
+  /* ── STRIDE buttons ───────────────────────────────────────────── */
+  .stride-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .stride-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 2px solid var(--pale-grey);
+    border-radius: var(--radius);
+    background: var(--white);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    font-family: var(--font);
+  }
+  .stride-btn:hover { border-color: var(--teal); background: var(--teal-light); }
+  .stride-btn.active.normal {
+    border-color: var(--teal);
+    background: var(--teal);
+    color: var(--white);
+  }
+  .stride-btn.active.dual {
+    border-color: var(--orange);
+    background: var(--orange);
+    color: var(--white);
+  }
+  .stride-initial {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--pale-grey);
+    color: var(--near-black);
+    font-weight: 800;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .stride-btn.active.normal .stride-initial { background: rgba(255,255,255,0.25); color: var(--white); }
+  .stride-btn.active.dual   .stride-initial { background: rgba(255,255,255,0.25); color: var(--white); }
+  .stride-name { font-weight: 700; font-size: 0.95rem; display: block; }
+  .stride-hint { font-size: 0.75rem; opacity: 0.75; display: block; margin-top: 1px; }
+  .stride-btn.active .stride-hint { opacity: 0.85; }
+  .dual-tag {
+    margin-left: auto;
+    background: rgba(255,255,255,0.25);
+    color: var(--white);
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    display: none;
+  }
+  .stride-btn.active.dual .dual-tag { display: block; }
+
+  /* ── Property cards ───────────────────────────────────────────── */
+  .prop-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .prop-card {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: var(--radius);
+    border: 2px solid transparent;
+    background: var(--pale-grey);
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: var(--font);
+  }
+  .prop-card:hover { border-color: var(--teal); background: var(--teal-light); }
+  .prop-card.violated-teal {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: var(--white);
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(26,153,136,0.35);
+  }
+  .prop-card.violated-orange {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: var(--white);
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(235,86,0,0.35);
+  }
+  .prop-card.stride-highlighted {
+    border-color: var(--sky-accent);
+    background: var(--sky-blue);
+  }
+  .prop-initial {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.08);
+    font-weight: 800;
+    font-size: 0.95rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--dark-grey);
+    transition: all 0.15s;
+  }
+  .prop-card.violated-teal  .prop-initial { background: rgba(255,255,255,0.2); color: var(--white); }
+  .prop-card.violated-orange .prop-initial { background: rgba(255,255,255,0.2); color: var(--white); }
+  .prop-label { font-weight: 700; font-size: 0.95rem; }
+  .prop-sub   { font-size: 0.72rem; opacity: 0.7; margin-top: 1px; }
+  .prop-card.violated-teal  .prop-sub { opacity: 0.85; }
+  .prop-card.violated-orange .prop-sub { opacity: 0.85; }
+  .prop-status {
+    margin-left: auto;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .violated-label-teal {
+    background: rgba(255,255,255,0.22);
+    color: var(--white);
+  }
+  .violated-label-orange {
+    background: rgba(255,255,255,0.22);
+    color: var(--white);
+  }
+
+  /* ── Explanation panel (full width) ──────────────────────────── */
+  .explain-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  .explain-box {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.09);
+    overflow: hidden;
+    min-height: 90px;
+  }
+  .explain-header {
+    background: var(--near-black);
+    color: var(--white);
+    padding: 0.5rem 1rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .explain-body {
+    padding: 0.85rem 1.1rem;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--dark-grey);
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+  }
+  .explain-body .highlight {
+    color: var(--teal);
+    font-weight: 700;
+  }
+  .explain-body .highlight-orange {
+    color: var(--orange);
+    font-weight: 700;
+  }
+  .explain-idle { color: var(--dark-grey); opacity: 0.6; font-style: italic; }
+
+  /* ── Architecture reference (full width) ─────────────────────── */
+  .arch-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1rem 0;
+  }
+  .arch-panel {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.09);
+    overflow: hidden;
+  }
+  .arch-header {
+    background: var(--slate);
+    color: var(--white);
+    padding: 0.55rem 1rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .arch-toggle {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: var(--white);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: var(--font);
+  }
+  .arch-toggle:hover { background: rgba(255,255,255,0.25); }
+  .arch-inner { padding: 0.75rem 1rem; }
+  .arch-inner.hidden { display: none; }
+  .arch-svg-wrap { overflow-x: auto; }
+  .flow-btns {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.65rem;
+    align-items: center;
+  }
+  .flow-label { font-size: 0.75rem; font-weight: 600; color: var(--dark-grey); margin-right: 0.25rem; }
+  .flow-btn {
+    background: var(--pale-grey);
+    border: 2px solid transparent;
+    border-radius: 4px;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.14s;
+    color: var(--near-black);
+  }
+  .flow-btn:hover { border-color: var(--teal); background: var(--teal-light); }
+  .flow-btn.active { background: var(--orange); border-color: var(--orange); color: var(--white); }
+  .flow-num {
+    width: 20px; height: 20px;
+    background: var(--orange);
+    color: var(--white);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .flow-btn.active .flow-num { background: rgba(255,255,255,0.25); }
+  .flow-desc-strip {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--orange-light);
+    border-left: 3px solid var(--orange);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: 0.8rem;
+    color: var(--near-black);
+    display: none;
+  }
+  .flow-desc-strip.visible { display: block; }
+
+  /* ── Footer hint ──────────────────────────────────────────────── */
+  .footer-hint {
+    max-width: 1100px;
+    margin: 1rem auto 0;
+    padding: 0 1rem;
+    font-size: 0.75rem;
+    color: var(--dark-grey);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────── -->
+<header>
+  <div class="header-left">
+    <span class="header-module">NB5004CEM Cybersecurity &mdash; Session 2</span>
+    <span class="header-title">STRIDE Mapper</span>
+  </div>
+  <div class="header-bars">
+    <div class="bar-teal"></div>
+    <div class="bar-orange"></div>
+  </div>
+</header>
+
+<!-- ── Instructions ────────────────────────────────────────────── -->
+<div class="instructions">
+  <span class="step-badge">Step 1</span>
+  <span>Click a <strong>STRIDE category</strong> to see which property it violates</span>
+  <span class="step-badge">Step 2</span>
+  <span>Click a <strong>property</strong> to see which STRIDE threats target it</span>
+  <span class="step-badge">Bonus</span>
+  <span>Select a data <strong>flow</strong> below for contextual detail</span>
+</div>
+
+<!-- ── Architecture reference ──────────────────────────────────── -->
+<div class="arch-wrap" style="padding-top:1.1rem;">
+  <div class="arch-panel">
+    <div class="arch-header">
+      Architecture Reference - Web Application (5 Data Flows)
+      <button class="arch-toggle" onclick="toggleArch()">Hide</button>
+    </div>
+    <div class="arch-inner" id="archInner">
+      <div class="arch-svg-wrap">
+        <svg viewBox="0 0 860 130" width="100%" style="min-width:520px;max-width:860px;display:block;">
+          <!-- Zone backgrounds -->
+          <rect x="0"   y="18" width="155" height="90" rx="4" fill="#E9EDEE" />
+          <rect x="160" y="18" width="215" height="90" rx="4" fill="#E6F4F1" />
+          <rect x="380" y="18" width="200" height="90" rx="4" fill="#EDF1F4" />
+          <rect x="585" y="18" width="275" height="90" rx="4" fill="#FFF3ED" />
+
+          <!-- Zone labels -->
+          <text x="77"  y="13" font-family="Segoe UI,Arial,sans-serif" font-size="9.5" fill="#595959" font-weight="600" text-anchor="middle">Internet</text>
+          <text x="267" y="13" font-family="Segoe UI,Arial,sans-serif" font-size="9.5" fill="#1A9988" font-weight="700" text-anchor="middle">DMZ</text>
+          <text x="480" y="13" font-family="Segoe UI,Arial,sans-serif" font-size="9.5" fill="#5B6B7A" font-weight="600" text-anchor="middle">Internal Network</text>
+          <text x="722" y="13" font-family="Segoe UI,Arial,sans-serif" font-size="9.5" fill="#EB5600" font-weight="700" text-anchor="middle">Data Layer</text>
+
+          <!-- Trust boundary lines -->
+          <line x1="157" y1="14" x2="157" y2="110" stroke="#1A9988" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <line x1="378" y1="14" x2="378" y2="110" stroke="#1A9988" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <line x1="583" y1="14" x2="583" y2="110" stroke="#1A9988" stroke-width="1.5" stroke-dasharray="5,3"/>
+
+          <!-- TB labels -->
+          <text x="157" y="12" font-family="Segoe UI,Arial,sans-serif" font-size="7.5" fill="#1A9988" font-weight="700" text-anchor="middle">TB1</text>
+          <text x="378" y="12" font-family="Segoe UI,Arial,sans-serif" font-size="7.5" fill="#1A9988" font-weight="700" text-anchor="middle">TB2</text>
+          <text x="583" y="12" font-family="Segoe UI,Arial,sans-serif" font-size="7.5" fill="#1A9988" font-weight="700" text-anchor="middle">TB3</text>
+
+          <!-- Main row components -->
+          <!-- External User -->
+          <rect x="8"   y="28" width="110" height="44" rx="4" fill="#6AA4C8"/>
+          <text x="63"  y="47" font-family="Segoe UI,Arial,sans-serif" font-size="9" fill="white" font-weight="700" text-anchor="middle">External</text>
+          <text x="63"  y="60" font-family="Segoe UI,Arial,sans-serif" font-size="9" fill="white" font-weight="700" text-anchor="middle">User</text>
+
+          <!-- WAF/Proxy -->
+          <rect x="168" y="28" width="90" height="44" rx="4" fill="#1A9988"/>
+          <text x="213" y="47" font-family="Segoe UI,Arial,sans-serif" font-size="9" fill="white" font-weight="700" text-anchor="middle">WAF /</text>
+          <text x="213" y="60" font-family="Segoe UI,Arial,sans-serif" font-size="9" fill="white" font-weight="700" text-anchor="middle">Proxy</text>
+
+          <!-- Web Server -->
+          <rect x="278" y="28" width="90" height="44" rx="4" fill="#1A9988"/>
+          <text x="323" y="47" font-family="Segoe UI,Arial,sans-serif" font-size="9" fill="white" font-weight="700" text-anchor="middle">Web</text>
+          <text x="323" y="60" font-family="Segoe UI,Arial,sans-serif" font-size="9" fill="white" font-weight="700" text-anchor="middle">Server</text>
+
+          <!-- App Server -->
+          <rect x="388" y="28" width="110" height="44" rx="4" fill="#6AA4C8"/>
+          <text x="443" y="47" font-family="Segoe UI,Arial,sans-serif" font-size="9" fill="white" font-weight="700" text-anchor="middle">Application</text>
+          <text x="443" y="60" font-family="Segoe UI,Arial,sans-serif" font-size="9" fill="white" font-weight="700" text-anchor="middle">Server</text>
+
+          <!-- Database -->
+          <rect x="600" y="28" width="130" height="44" rx="4" fill="#EB5600"/>
+          <text x="665" y="47" font-family="Segoe UI,Arial,sans-serif" font-size="9" fill="white" font-weight="700" text-anchor="middle">Database</text>
+          <text x="665" y="60" font-family="Segoe UI,Arial,sans-serif" font-size="9" fill="white" font-weight="700" text-anchor="middle">(sensitive data)</text>
+
+          <!-- Admin User (second row) -->
+          <rect x="8"   y="84" width="110" height="32" rx="4" fill="#595959"/>
+          <text x="63"  y="97" font-family="Segoe UI,Arial,sans-serif" font-size="9" fill="white" font-weight="700" text-anchor="middle">Admin</text>
+          <text x="63"  y="109" font-family="Segoe UI,Arial,sans-serif" font-size="9" fill="white" font-weight="700" text-anchor="middle">User</text>
+
+          <!-- Flow arrows and numbers - main row -->
+          <!-- Flow 1: Ext User -> WAF -->
+          <line x1="118" y1="50" x2="165" y2="50" stroke="#EB5600" stroke-width="1.8"/>
+          <polygon points="165,46 173,50 165,54" fill="#EB5600"/>
+          <circle cx="141" cy="50" r="8" fill="#EB5600"/>
+          <text x="141" y="53.5" font-family="Segoe UI,Arial,sans-serif" font-size="8" fill="white" font-weight="800" text-anchor="middle">1</text>
+
+          <!-- Flow 2: WAF -> Web Server -->
+          <line x1="258" y1="50" x2="275" y2="50" stroke="#EB5600" stroke-width="1.8"/>
+          <polygon points="275,46 283,50 275,54" fill="#EB5600"/>
+          <circle cx="268" cy="50" r="8" fill="#EB5600"/>
+          <text x="268" y="53.5" font-family="Segoe UI,Arial,sans-serif" font-size="8" fill="white" font-weight="800" text-anchor="middle">2</text>
+
+          <!-- Flow 3: Web Server -> App Server (crosses TB2) -->
+          <line x1="368" y1="50" x2="385" y2="50" stroke="#EB5600" stroke-width="1.8"/>
+          <polygon points="385,46 393,50 385,54" fill="#EB5600"/>
+          <circle cx="378" cy="50" r="8" fill="#1A9988"/>
+          <text x="378" y="53.5" font-family="Segoe UI,Arial,sans-serif" font-size="8" fill="white" font-weight="800" text-anchor="middle">3</text>
+
+          <!-- Flow 4: App Server -> DB (crosses TB3) -->
+          <line x1="498" y1="50" x2="597" y2="50" stroke="#EB5600" stroke-width="1.8"/>
+          <polygon points="597,46 605,50 597,54" fill="#EB5600"/>
+          <circle cx="545" cy="50" r="8" fill="#EB5600"/>
+          <text x="545" y="53.5" font-family="Segoe UI,Arial,sans-serif" font-size="8" fill="white" font-weight="800" text-anchor="middle">4</text>
+
+          <!-- Flow 5: Admin User -> App Server (long path across zones) -->
+          <polyline points="118,100 450,100 450,72" fill="none" stroke="#EB5600" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <polygon points="446,72 450,64 454,72" fill="#EB5600"/>
+          <circle cx="290" cy="100" r="8" fill="#EB5600"/>
+          <text x="290" y="103.5" font-family="Segoe UI,Arial,sans-serif" font-size="8" fill="white" font-weight="800" text-anchor="middle">5</text>
+        </svg>
+      </div>
+      <div class="flow-btns">
+        <span class="flow-label">Select a flow:</span>
+        <button class="flow-btn" onclick="selectFlow(1)"><span class="flow-num">1</span>HTTPS Request (Ext. User - WAF)</button>
+        <button class="flow-btn" onclick="selectFlow(2)"><span class="flow-num">2</span>Filtered Traffic (WAF - Web Server)</button>
+        <button class="flow-btn" onclick="selectFlow(3)"><span class="flow-num">3</span>App Request (Web Server - App Server)</button>
+        <button class="flow-btn" onclick="selectFlow(4)"><span class="flow-num">4</span>DB Query (App Server - Database)</button>
+        <button class="flow-btn" onclick="selectFlow(5)"><span class="flow-num">5</span>Admin Access (Admin User - App Server)</button>
+      </div>
+      <div class="flow-desc-strip" id="flowDesc"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Main interaction panels ─────────────────────────────────── -->
+<div class="main-wrap">
+
+  <!-- STRIDE panel -->
+  <div class="panel">
+    <div class="panel-header teal">STRIDE &rarr; Property violated</div>
+    <div class="panel-body">
+      <div class="stride-grid" id="strideGrid">
+        <!-- rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Property panel -->
+  <div class="panel">
+    <div class="panel-header slate">Five Security Properties</div>
+    <div class="panel-body">
+      <div class="prop-grid" id="propGrid">
+        <!-- rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Explanation panel ───────────────────────────────────────── -->
+<div class="explain-wrap">
+  <div class="explain-box">
+    <div class="explain-header">Explanation</div>
+    <div class="explain-body" id="explainBox">
+      <span class="explain-idle">Select a STRIDE category or a property above to see the reasoning here.</span>
+    </div>
+  </div>
+</div>
+
+<div class="footer-hint" style="margin-top:0.6rem;">
+  NB5004CEM Cybersecurity &nbsp;&bull;&nbsp; Session 2: Threat Thinking &nbsp;&bull;&nbsp; Coventry University / NIBM
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────
+const STRIDE_DATA = [
+  {
+    id: 'S',
+    name: 'Spoofing',
+    hint: 'Impersonating another user, system, or component',
+    properties: ['authenticity'],
+    dual: false,
+    color: 'normal',
+    explanation: 'Spoofing attacks impersonate a legitimate entity - a user, a service, or a system component. The victim believes it is communicating with a trusted party when it is not. This directly violates <span class="highlight">Authenticity</span>: the system can no longer trust that a request originates from who it claims to be. Example: an attacker forges an HTTP request pretending to be an authenticated user.',
+  },
+  {
+    id: 'T',
+    name: 'Tampering',
+    hint: 'Unauthorised modification of data, code, or configuration',
+    properties: ['integrity'],
+    dual: false,
+    color: 'normal',
+    explanation: 'Tampering alters data, code, or configuration without authorisation. The system continues to operate - but on corrupted input. This violates <span class="highlight">Integrity</span>: the data or system state is no longer accurate or trustworthy. Example: an attacker intercepts a database query and modifies the payload in transit.',
+  },
+  {
+    id: 'R',
+    name: 'Repudiation',
+    hint: 'Denying an action when no audit trail can disprove the denial',
+    properties: ['accountability'],
+    dual: false,
+    color: 'normal',
+    explanation: 'Repudiation is the ability of an actor to deny having performed an action because no reliable audit trail exists to prove otherwise. This violates <span class="highlight">Accountability</span>: the system cannot trace actions to responsible parties. Example: a user denies having deleted records; there are no timestamped, integrity-protected logs to refute the claim.',
+  },
+  {
+    id: 'I',
+    name: 'Information Disclosure',
+    hint: 'Exposing information to parties not authorised to see it',
+    properties: ['confidentiality'],
+    dual: false,
+    color: 'normal',
+    explanation: 'Information Disclosure occurs when data reaches an unauthorised party - through a breach, a misconfigured API, an overly verbose error message, or a traffic interception. This violates <span class="highlight">Confidentiality</span>: the guarantee that information is accessible only to those authorised. Example: an API returns full user records including password hashes when only the username was requested.',
+  },
+  {
+    id: 'D',
+    name: 'Denial of Service',
+    hint: 'Making a system unavailable to legitimate users',
+    properties: ['availability'],
+    dual: false,
+    color: 'normal',
+    explanation: 'Denial of Service attacks exhaust system resources - CPU, memory, bandwidth, connection pools - so that legitimate users cannot access the service. This violates <span class="highlight">Availability</span>: the guarantee that systems and data are accessible when needed. Example: a flood of HTTP requests overwhelms the web server, returning timeouts to every legitimate client.',
+  },
+  {
+    id: 'E',
+    name: 'Elevation of Privilege',
+    hint: 'Gaining capabilities or permissions beyond what was authorised',
+    properties: ['authenticity', 'accountability'],
+    dual: true,
+    color: 'dual',
+    explanation: 'Elevation of Privilege is the nuanced case: an actor gains capabilities beyond what they were authorised for, acting as if they were a higher-privileged identity. This violates BOTH <span class="highlight-orange">Authenticity</span> (the system accepts the actor at a privilege level they do not legitimately hold) AND <span class="highlight-orange">Accountability</span> (actions performed at elevated privilege may not be traceable to the actual actor, particularly if shared or escalated credentials were used). CIA alone would not surface either of these violations.',
+  },
+];
+
+const PROPERTY_DATA = [
+  {
+    id: 'confidentiality',
+    label: 'Confidentiality',
+    initial: 'C',
+    sub: 'Information accessible only to those authorised',
+    strides: ['I'],
+  },
+  {
+    id: 'integrity',
+    label: 'Integrity',
+    initial: 'I',
+    sub: 'Information and systems are accurate and unaltered',
+    strides: ['T'],
+  },
+  {
+    id: 'availability',
+    label: 'Availability',
+    initial: 'A',
+    sub: 'Systems accessible when legitimately needed',
+    strides: ['D'],
+  },
+  {
+    id: 'authenticity',
+    label: 'Authenticity',
+    initial: 'Au',
+    sub: 'An entity is genuinely what it claims to be',
+    strides: ['S', 'E'],
+  },
+  {
+    id: 'accountability',
+    label: 'Accountability',
+    initial: 'Ac',
+    sub: 'Every action traceable to a responsible party',
+    strides: ['R', 'E'],
+  },
+];
+
+const FLOW_DATA = [
+  { id: 1, short: 'Crosses TB1 (outermost boundary)',  detail: '<strong>Flow 1 - HTTPS Request.</strong> External User to WAF/Proxy. This crosses TB1, the outermost trust boundary. Traffic arriving here is fully untrusted. Every STRIDE threat is plausible on this flow. The WAF inspects and filters before forwarding.' },
+  { id: 2, short: 'Within DMZ (same trust zone)',       detail: '<strong>Flow 2 - Filtered Traffic.</strong> WAF to Web Server, within the DMZ. Both components operate at the same trust level - this flow does not cross a trust boundary. Tampering on this internal link is a realistic concern if transport is not encrypted.' },
+  { id: 3, short: 'Crosses TB2 (DMZ to internal)',      detail: '<strong>Flow 3 - App Request.</strong> Web Server to App Server, crossing TB2. This is where HTTP requests become application-layer calls. Authentication of the Web Server to the App Server should be enforced here - Spoofing at this boundary allows lateral movement.' },
+  { id: 4, short: 'Crosses TB3 (innermost boundary)',   detail: '<strong>Flow 4 - Database Query.</strong> App Server to Database, crossing TB3, the innermost boundary. Databases hold the highest-value data. Tampering a query (SQL injection) or elevating privilege on this flow could expose or destroy the entire data layer.' },
+  { id: 5, short: 'Crosses TB1 + TB2 in one hop',      detail: '<strong>Flow 5 - Admin Access.</strong> Admin User to App Server directly, crossing TB1 and TB2 in one step. This is the most dangerous flow: a compromised or spoofed administrator bypasses all intermediate controls. Spoofing here (impersonating an admin) is catastrophic for both Authenticity and Accountability.' },
+];
+
+// ── State ─────────────────────────────────────────────────────────
+let activeStride   = null;  // 'S','T','R','I','D','E' or null
+let activeProperty = null;  // 'confidentiality' etc or null
+let activeFlow     = null;  // 1-5 or null
+
+// ── Render STRIDE grid ────────────────────────────────────────────
+function renderStride() {
+  const container = document.getElementById('strideGrid');
+  container.innerHTML = '';
+  STRIDE_DATA.forEach(s => {
+    const isActive = activeStride === s.id;
+    const btn = document.createElement('button');
+    btn.className = 'stride-btn' + (isActive ? ` active ${s.color}` : '');
+    btn.innerHTML = `
+      <span class="stride-initial">${s.id}</span>
+      <span>
+        <span class="stride-name">${s.name}</span>
+        <span class="stride-hint">${s.hint}</span>
+      </span>
+      ${s.dual ? '<span class="dual-tag">DUAL VIOLATION</span>' : ''}
+    `;
+    btn.onclick = () => toggleStride(s.id);
+    container.appendChild(btn);
+  });
+}
+
+// ── Render property grid ──────────────────────────────────────────
+function renderProps() {
+  const container = document.getElementById('propGrid');
+  container.innerHTML = '';
+  PROPERTY_DATA.forEach(p => {
+    let cls = 'prop-card';
+    let statusHtml = '';
+
+    if (activeStride) {
+      // STRIDE mode: highlight violated properties
+      const sd = STRIDE_DATA.find(s => s.id === activeStride);
+      if (sd) {
+        const violated = sd.properties.includes(p.id);
+        if (violated) {
+          const colorCls = sd.dual ? 'violated-orange' : 'violated-teal';
+          cls += ` ${colorCls}`;
+          const labelCls = sd.dual ? 'violated-label-orange' : 'violated-label-teal';
+          statusHtml = `<span class="prop-status ${labelCls}">VIOLATED</span>`;
+        }
+      }
+    } else if (activeProperty) {
+      // Property mode: highlight property being inspected
+      if (p.id === activeProperty) {
+        cls += ' stride-highlighted';
+      }
+    }
+
+    const card = document.createElement('button');
+    card.className = cls;
+    card.innerHTML = `
+      <span class="prop-initial">${p.initial}</span>
+      <span>
+        <div class="prop-label">${p.label}</div>
+        <div class="prop-sub">${p.sub}</div>
+      </span>
+      ${statusHtml}
+    `;
+    card.onclick = () => toggleProperty(p.id);
+    container.appendChild(card);
+  });
+}
+
+// ── Render explanation ────────────────────────────────────────────
+function renderExplain() {
+  const box = document.getElementById('explainBox');
+
+  if (activeStride) {
+    const sd = STRIDE_DATA.find(s => s.id === activeStride);
+    const propNames = sd.properties.map(pid => {
+      return PROPERTY_DATA.find(p => p.id === pid).label;
+    }).join(' + ');
+    let contextNote = '';
+    if (activeFlow) {
+      const fd = FLOW_DATA.find(f => f.id === activeFlow);
+      contextNote = `<br><br><strong>Flow ${activeFlow} context:</strong> ${fd.detail}`;
+    }
+    box.innerHTML = `<span>${sd.explanation}${contextNote}</span>`;
+  } else if (activeProperty) {
+    const pd = PROPERTY_DATA.find(p => p.id === activeProperty);
+    const strideNames = pd.strides.map(sid => {
+      return STRIDE_DATA.find(s => s.id === sid).name;
+    }).join(' and ');
+    const sidCount = pd.strides.length;
+    box.innerHTML = `<span><strong class="highlight">${pd.label}</strong> is violated by ${sidCount > 1 ? 'two STRIDE categories' : 'one STRIDE category'}: <strong>${strideNames}</strong>. ${pd.sub}. Select a STRIDE category above to see the full explanation, or try the other properties to explore the full map.</span>`;
+  } else {
+    box.innerHTML = '<span class="explain-idle">Select a STRIDE category or a property above to see the reasoning here.</span>';
+  }
+}
+
+// ── Toggle handlers ───────────────────────────────────────────────
+function toggleStride(id) {
+  activeProperty = null;
+  activeStride = (activeStride === id) ? null : id;
+  renderAll();
+}
+
+function toggleProperty(id) {
+  activeStride = null;
+  activeProperty = (activeProperty === id) ? null : id;
+  renderAll();
+}
+
+function selectFlow(id) {
+  // Flow selection enriches explanation; does not clear stride/property
+  if (activeFlow === id) {
+    activeFlow = null;
+  } else {
+    activeFlow = id;
+  }
+  // Update flow buttons
+  document.querySelectorAll('.flow-btn').forEach((btn, i) => {
+    btn.className = 'flow-btn' + (i + 1 === activeFlow ? ' active' : '');
+  });
+  // Update description strip
+  const strip = document.getElementById('flowDesc');
+  if (activeFlow) {
+    const fd = FLOW_DATA.find(f => f.id === activeFlow);
+    strip.innerHTML = `<strong>Flow ${activeFlow}:</strong> ${fd.short}`;
+    strip.className = 'flow-desc-strip visible';
+  } else {
+    strip.className = 'flow-desc-strip';
+  }
+  renderExplain();
+}
+
+function renderAll() {
+  renderStride();
+  renderProps();
+  renderExplain();
+}
+
+// ── Architecture toggle ───────────────────────────────────────────
+let archVisible = true;
+function toggleArch() {
+  archVisible = !archVisible;
+  const inner = document.getElementById('archInner');
+  const btn = document.querySelector('.arch-toggle');
+  inner.className = 'arch-inner' + (archVisible ? '' : ' hidden');
+  btn.textContent = archVisible ? 'Hide' : 'Show';
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+renderAll();
+</script>
+</body>
+</html>
